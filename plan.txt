@@ -1,0 +1,5 @@
+Scope of the Project:
+1. The project should support: Guitar, Piano, Violin and Drums
+2. We are going to work with dynamic hestures as we are trying to make a better version later on where we use specific hand gestures to create music
+3.For this version we are going to focus on visual feedback as output.
+4. We will use webcam as the hardware required.
