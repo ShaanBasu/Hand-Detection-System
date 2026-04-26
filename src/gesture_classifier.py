@@ -131,7 +131,7 @@ class GestureClassifier:
         # then transform both splits using the same fitted scaler.
         print("\nNormalising Features... ")
         X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaled.transform(X_test)
+        X_test_scaled = self.scaler.transform(X_test)
         
         #Step 3: We train the random forest
         print("Fitting Random ForesT Classifier...")

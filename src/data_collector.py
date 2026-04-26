@@ -11,6 +11,7 @@ import numpy as np
 import pickle
 import os
 from hand_tracker import HandTracker
+import time
 
 
 class InstrumentGestureCollector:
@@ -285,6 +286,17 @@ class InstrumentGestureCollector:
         print(f"COLLECTING: {instrument.upper()} - {gesture_name.upper()}")
         print(f"{'='*70}")
         
+        capture_delay_sec = 3
+        burst_count = 5
+        burst_interval_sec = 0.2
+
+        # Capture state machine:
+        # idle -> countdown -> burst -> idle
+        capture_requested_at = None
+        burst_active = False
+        burst_captured = 0
+        next_burst_capture_at = None
+        
         while collected < num_samples:
             ret, frame = cap.read()
             
@@ -346,33 +358,91 @@ class InstrumentGestureCollector:
             # Controls
             cv2.putText(
                 frame,
-                "'c' - Capture | 'q' - Finish | 'SPACE' - Skip",
+                "'c' - 3s countdown + burst(5) | 'q' - Finish | 'SPACE' - Cancel",
                 (10, frame.shape[0] - 30),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
                 (255, 255, 0),
                 1
             )
+
+            # Countdown overlay
+            now = time.time()
+            if capture_requested_at is not None:
+                elapsed = now - capture_requested_at
+                remaining = max(0, int(capture_delay_sec - elapsed + 0.999))
+                cv2.putText(
+                    frame,
+                    f"Capturing in {remaining}...",
+                    (10, frame.shape[0] - 110),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (0, 255, 255),
+                    2
+                )
+
+                if elapsed >= capture_delay_sec:
+                    capture_requested_at = None
+                    burst_active = True
+                    burst_captured = 0
+                    next_burst_capture_at = now
+                    print(f"  Countdown complete. Starting burst capture ({burst_count} frames).")
+
+            # Burst overlay + timed capture attempts
+            if burst_active:
+                cv2.putText(
+                    frame,
+                    f"Burst: {burst_captured}/{burst_count}",
+                    (10, frame.shape[0] - 110),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (0, 255, 255),
+                    2
+                )
+
+                if next_burst_capture_at is not None and now >= next_burst_capture_at:
+                    attempt_num = burst_captured + 1
+
+                    if results.multi_hand_landmarks and collected < num_samples:
+                        landmarks = self.extract_landmarks_as_list(results.multi_hand_landmarks[0])
+                        gesture_data.append(landmarks)
+                        collected += 1
+                        print(f"  ✓ Burst capture {attempt_num}/{burst_count} (total {collected}/{num_samples})")
+                    else:
+                        print(f"  ✗ Burst capture {attempt_num}/{burst_count} skipped (no hand detected)")
+
+                    burst_captured += 1
+                    next_burst_capture_at += burst_interval_sec
+
+                    if burst_captured >= burst_count or collected >= num_samples:
+                        burst_active = False
+                        next_burst_capture_at = None
+                        print("  Burst finished.")
             
             cv2.imshow(f"Collecting: {instrument} - {gesture_name}", frame)
             
             key = cv2.waitKey(1) & 0xFF
             
-            if key == ord('c'):
-                if results.multi_hand_landmarks:
-                    landmarks = self.extract_landmarks_as_list(results.multi_hand_landmarks[0])
-                    gesture_data.append(landmarks)
-                    collected += 1
-                    print(f"  ✓ Captured {collected}/{num_samples}")
-                else:
-                    print(f"  ✗ No hand detected in frame")
-            
-            elif key == ord('q') or key == 27:
+            if key == ord('q') or key == 27:
                 print(f"Finishing data collection.")
                 break
             
             elif key == ord(' '):
+                if capture_requested_at is not None or burst_active:
+                    capture_requested_at = None
+                    burst_active = False
+                    burst_captured = 0
+                    next_burst_capture_at = None
+                    print("  Pending capture cancelled.")
                 continue
+
+            elif key == ord('c'):
+                if capture_requested_at is None and not burst_active:
+                    capture_requested_at = now
+                    print(
+                        f"  Countdown started: capturing {burst_count} frames in {capture_delay_sec} seconds "
+                        f"at {burst_interval_sec:.1f}s intervals..."
+                    )
         
         cap.release()
         cv2.destroyAllWindows()
