@@ -18,10 +18,9 @@ class InstrumentGestureCollector:
     Collects hand landmark data for instrument-specific gestures.
     
     This focuses on gestures that directly map to instrument controls:
+    - Guitar: chord shape, strumming, pick grip, mute
     - Piano: key press, hand position (left/right), hand height
-    - Violin: bow movement (up/down), vibrato
     - Drums: hitting motion, hand position
-    - Flute: finger positions, hand shape
     """
     
     # Define gestures organized by instrument
@@ -62,41 +61,45 @@ class InstrumentGestureCollector:
                 ]
             }
         },
-        "violin": {
-            "violin_bow_up": {
-                "description": "Hand moving upward as if moving a violin bow upward.",
+        "guitar": {
+            # Gesture: chord shape — fingers curled as if pressing frets
+            "guitar_chord": {
+                "description": "Hand forming a chord shape on the fretboard (fingers curled, pressing strings).",
                 "tips": [
-                    "Make upward motion with hand",
-                    "Keep fingers slightly curved",
-                    "Move at shoulder level",
-                    "Smooth, continuous motion"
+                    "Curl fingers as if pressing frets",
+                    "Thumb rests behind the neck",
+                    "Fingers arch over the strings",
+                    "Keep wrist relaxed"
                 ]
             },
-            "violin_bow_down": {
-                "description": "Hand moving downward as if moving a violin bow downward.",
+            # Gesture: strumming — downward sweep of the hand
+            "guitar_strum": {
+                "description": "Hand moving downward in a strumming motion across the strings.",
                 "tips": [
-                    "Make downward motion with hand",
-                    "Keep fingers slightly curved",
-                    "Move at shoulder level",
-                    "Smooth, continuous motion"
+                    "Sweep hand downward smoothly",
+                    "Fingers slightly extended",
+                    "Motion comes from the wrist",
+                    "Simulate brushing across strings"
                 ]
             },
-            "violin_position": {
-                "description": "Hand in violin playing position (holding bow grip).",
+            # Gesture: pick grip — thumb and index pinched together
+            "guitar_pick": {
+                "description": "Thumb and index finger pinched together as if holding a guitar pick.",
                 "tips": [
-                    "Curl fingers as if holding bow",
-                    "Thumb underneath",
-                    "Fingers on top",
-                    "Hand at shoulder height"
+                    "Pinch thumb and index finger together",
+                    "Other fingers loosely curled",
+                    "Hold hand at string level",
+                    "Simulate gripping a pick"
                 ]
             },
-            "violin_vibrato": {
-                "description": "Hand shaking/vibrating motion (vibrato effect).",
+            # Gesture: palm mute — open palm lowered toward strings
+            "guitar_mute": {
+                "description": "Palm resting lightly on the strings to mute them.",
                 "tips": [
-                    "Shake hand back and forth",
-                    "Small, quick movements",
-                    "Keep fingers curved",
-                    "Wrist movement"
+                    "Open palm facing downward",
+                    "Lower hand toward strings",
+                    "Fingers relaxed and together",
+                    "Simulate palm muting"
                 ]
             }
         },
@@ -135,44 +138,6 @@ class InstrumentGestureCollector:
                     "Make fist grip",
                     "Ready to strike",
                     "Keep hand steady"
-                ]
-            }
-        },
-        "flute": {
-            "flute_play": {
-                "description": "Hands positioned as if holding and playing a flute.",
-                "tips": [
-                    "Both hands in front of mouth",
-                    "Fingers positioned on sides",
-                    "As if holding flute horizontally",
-                    "Relaxed hand position"
-                ]
-            },
-            "flute_high": {
-                "description": "Fingers positioned for playing high notes (more fingers curled).",
-                "tips": [
-                    "Curl more fingers inward",
-                    "Simulate covering more holes",
-                    "Hand higher up",
-                    "Precise finger positions"
-                ]
-            },
-            "flute_low": {
-                "description": "Fingers positioned for playing low notes (fewer fingers curled).",
-                "tips": [
-                    "Keep most fingers extended",
-                    "Simulate covering fewer holes",
-                    "Hand lower",
-                    "Open finger positions"
-                ]
-            },
-            "flute_breath": {
-                "description": "Hand near mouth in breath/breathing gesture.",
-                "tips": [
-                    "Hand near mouth area",
-                    "Open palm gesture",
-                    "Simulate taking breath",
-                    "Relaxed hand position"
                 ]
             }
         }
@@ -284,7 +249,7 @@ class InstrumentGestureCollector:
         Collect training data for a specific instrument gesture.
         
         Args:
-            instrument (str): Name of the instrument (piano, violin, drums, flute)
+            instrument (str): Name of the instrument (piano, guitar, drums)
             gesture_name (str): Name of the gesture
             num_samples (int): Number of samples to collect
         """
